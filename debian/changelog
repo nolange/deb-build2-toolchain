@@ -1,0 +1,5 @@
+build2-toolchain (0.7.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Norbert Lange <nolange79@gmail.com>  Sun, 13 Aug 2017 21:56:30 +0200

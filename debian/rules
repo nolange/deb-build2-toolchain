@@ -1,0 +1,69 @@
+#!/usr/bin/make -f
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
+
+
+# see FEATURE AREAS in dpkg-buildflags(1)
+#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# see ENVIRONMENT in dpkg-buildflags(1)
+# package maintainers to append CFLAGS
+#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+# package maintainers to append LDFLAGS
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+# include /usr/share/dpkg/default.mk
+include $(addprefix /usr/share/dpkg/,buildflags.mk architecture.mk)
+
+BOOTSTRAP_P1_EXE := build2/build2/b-bootp1
+BOOTSTRAP_P2_EXE := build2/build2/b-bootp2
+
+%:
+	dh $@
+
+$(BOOTSTRAP_P1_EXE):
+	cd build2 && ./bootstrap.sh $(CXX) && mv build2/b-boot $(abspath $(BOOTSTRAP_P1_EXE))
+
+bootstrap-p1: $(BOOTSTRAP_P1_EXE)
+
+$(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
+	cd build2 && \
+	  $(abspath $(BOOTSTRAP_P1_EXE)) config.cxx=$(CXX) config.bin.lib=static && mv build2/b $(abspath $(BOOTSTRAP_P2_EXE))
+
+bootstrap-p2: $(BOOTSTRAP_P2_EXE)
+
+override_dh_auto_configure: $(BOOTSTRAP_P2_EXE)
+	$(BOOTSTRAP_P2_EXE) configure    \
+	  config.cxx=$(CXX)               \
+	  config.cc.poptions="$(CPPFLAGS)"  \
+	  config.cc.loptions="$(LDFLAGS)"   \
+	  config.c.coptions="$(CFLAGS)"     \
+	  config.cxx.coptions="$(CXXFLAGS)" \
+	  config.install.root=/usr
+
+override_dh_auto_build: $(BOOTSTRAP_P2_EXE)
+	$(BOOTSTRAP_P2_EXE)
+
+override_dh_auto_install: $(BOOTSTRAP_P2_EXE)
+	$(BOOTSTRAP_P2_EXE) config.install.chroot=$(abspath debian/tmp) install
+
+unpack_sources:
+	tar -xf ../build2-toolchain_0.7.0.orig.tar.xz  --strip-components=1
+
+override_dh_auto_clean:
+
+
+#	$(BOOTSTRAP_P2_EXE) clean
+
+noo:
+	rm -rf $(BOOTSTRAP_P1_EXE) $(BOOTSTRAP_P2_EXE)
+	find build2 libbutl \( -name '*.o.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.hxx.d' \) -delete
+
+.PHONY: bootstrap-p1 bootstrap-p2
+
+
+# dh_make generated override targets
+# This is example for Cmake (See https://bugs.debian.org/641051 )
+#override_dh_auto_configure:
+#	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
+
