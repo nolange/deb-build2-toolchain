@@ -15,20 +15,24 @@ export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 # include /usr/share/dpkg/default.mk
 include $(addprefix /usr/share/dpkg/,buildflags.mk architecture.mk)
 
-BOOTSTRAP_P1_EXE := build2/build2/b-bootp1
-BOOTSTRAP_P2_EXE := build2/build2/b-bootp2
+BOOTSTRAP_PATH := _bstr
+BOOTSTRAP_P1_EXE := $(BOOTSTRAP_PATH)/p1/build2/b-boot
+BOOTSTRAP_P2_EXE := $(BOOTSTRAP_PATH)/p2/build2/b
 
 %:
 	dh $@
 
 $(BOOTSTRAP_P1_EXE):
-	cd build2 && ./bootstrap.sh $(CXX) && mv build2/b-boot $(abspath $(BOOTSTRAP_P1_EXE))
+	mkdir -p $(BOOTSTRAP_PATH)/p1
+	cd $(BOOTSTRAP_PATH)/p1 && \
+	  $(MAKE) -f $(abspath bootstrap.gmake) CXX=g++ -j8
 
 bootstrap-p1: $(BOOTSTRAP_P1_EXE)
 
 $(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
-	cd build2 && \
-	  $(abspath $(BOOTSTRAP_P1_EXE)) config.cxx=$(CXX) config.bin.lib=static && mv build2/b $(abspath $(BOOTSTRAP_P2_EXE))
+	mkdir -p $(BOOTSTRAP_PATH)/p2
+	$(abspath $(BOOTSTRAP_P1_EXE)) libbutl/@$(BOOTSTRAP_PATH)/p2/libbutl/ config.cxx=$(CXX) config.bin.lib=static
+	$(abspath $(BOOTSTRAP_P1_EXE)) build2/@$(BOOTSTRAP_PATH)/p2/build2/ config.cxx=$(CXX) config.bin.lib=static
 
 bootstrap-p2: $(BOOTSTRAP_P2_EXE)
 
@@ -51,12 +55,13 @@ unpack_sources:
 	tar -xf ../build2-toolchain_0.7.0.orig.tar.xz  --strip-components=1
 
 override_dh_auto_clean:
+	rm -rf $(dir $(dir $(BOOTSTRAP_P1_EXE))) $(dir $(dir $(BOOTSTRAP_P2_EXE))) 
 
 
 #	$(BOOTSTRAP_P2_EXE) clean
 
 noo:
-	rm -rf $(BOOTSTRAP_P1_EXE) $(BOOTSTRAP_P2_EXE)
+	rm -rf $(BOOTSTRAP_PATH)
 	find build2 libbutl \( -name '*.o.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.hxx.d' \) -delete
 
 .PHONY: bootstrap-p1 bootstrap-p2
