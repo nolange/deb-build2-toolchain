@@ -19,56 +19,54 @@ BOOTSTRAP_PATH := _bstr
 BOOTSTRAP_P1_EXE := $(BOOTSTRAP_PATH)/p1/build2/b-boot
 BOOTSTRAP_P2_EXE := $(BOOTSTRAP_PATH)/p2/build2/b
 
+# build2 tries to build/configure every directory and
+# uses some defaults that will break building easily.
+# adding 'build2/@build2/ libbutl/@libbutl/' restricts build2
+# to those libraries.
+
 %:
 	dh $@
 
 $(BOOTSTRAP_P1_EXE):
 	mkdir -p $(BOOTSTRAP_PATH)/p1
 	cd $(BOOTSTRAP_PATH)/p1 && \
-	  $(MAKE) -f $(abspath bootstrap.gmake) CXX=g++ -j8
+	  $(MAKE) -s -f $(abspath bootstrap.gmake) CXX=g++ -j8
 
 bootstrap-p1: $(BOOTSTRAP_P1_EXE)
 
 $(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
-	mkdir -p $(BOOTSTRAP_PATH)/p2
-	$(abspath $(BOOTSTRAP_P1_EXE)) libbutl/@$(BOOTSTRAP_PATH)/p2/libbutl/ config.cxx=$(CXX) config.bin.lib=static
-	$(abspath $(BOOTSTRAP_P1_EXE)) build2/@$(BOOTSTRAP_PATH)/p2/build2/ config.cxx=$(CXX) config.bin.lib=static
+	mkdir -p $(dir $(BOOTSTRAP_P2_EXE))
+	$(abspath $(BOOTSTRAP_P1_EXE)) build2/@build2/ libbutl/@libbutl/ config.cxx=$(CXX) config.bin.lib=static && \
+	  mv build2/b $(BOOTSTRAP_P2_EXE)
+	# remove any possible leftovers from the static build (paranoia mode)
+	$(MAKE) -s -f debian/rules clean_object_files
 
 bootstrap-p2: $(BOOTSTRAP_P2_EXE)
 
 override_dh_auto_configure: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE) configure    \
+	$(BOOTSTRAP_P2_EXE) 'configure(build2/@build2/ libbutl/@libbutl/)'    \
 	  config.cxx=$(CXX)               \
 	  config.cc.poptions="$(CPPFLAGS)"  \
 	  config.cc.loptions="$(LDFLAGS)"   \
 	  config.c.coptions="$(CFLAGS)"     \
 	  config.cxx.coptions="$(CXXFLAGS)" \
-	  config.install.root=/usr
+	  config.install.root=/usr \
+	  config.install.lib=exec_root/lib/$(DEB_HOST_MULTIARCH)
 
 override_dh_auto_build: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE)
+	$(BOOTSTRAP_P2_EXE) build2/@build2/ libbutl/@libbutl/
 
 override_dh_auto_install: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE) config.install.chroot=$(abspath debian/tmp) install
+	$(BOOTSTRAP_P2_EXE) config.install.chroot=$(abspath debian/tmp) 'install(build2/@build2/ libbutl/@libbutl/)'
 
-unpack_sources:
-	tar -xf ../build2-toolchain_0.7.0.orig.tar.xz  --strip-components=1
+clean_object_files:
+	rm -rf $(addprefix build2/,b b.d libb.u.a libb.u.a.d version.hxx version.hxx.d)
+	find build2 libbutl tests unit-tests \( -name '*.o' -o -name '*.o.d' -o -name '*.so.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.hxx.d' \) -delete
+	find tests libbutl/tests \( -name 'driver' -o -name 'driver.d' \) -delete
+	find build libbutl tests \( -name 'config.build' -o -name '*.shared.pc' -o -name '*.static.pc' -o -name '*.so' -o -name '*.a' \) -delete
 
-override_dh_auto_clean:
-	rm -rf $(dir $(dir $(BOOTSTRAP_P1_EXE))) $(dir $(dir $(BOOTSTRAP_P2_EXE))) 
-
-
-#	$(BOOTSTRAP_P2_EXE) clean
-
-noo:
+override_dh_auto_clean: clean_object_files
 	rm -rf $(BOOTSTRAP_PATH)
-	find build2 libbutl \( -name '*.o.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.hxx.d' \) -delete
 
-.PHONY: bootstrap-p1 bootstrap-p2
-
-
-# dh_make generated override targets
-# This is example for Cmake (See https://bugs.debian.org/641051 )
-#override_dh_auto_configure:
-#	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
+.PHONY: bootstrap-p1 bootstrap-p2 clean_object_files
 

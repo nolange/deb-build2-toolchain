@@ -83,10 +83,12 @@ build2-toolchain_0.7.0.orig.tar.xz
 
 # TODOs
 
--   \[ \] Find a proper solution for the libbutl dpendency
+-   \[X\] Find a proper solution for the libbutl dpendency
 
 -   \[ \] Properly support arguments for parallel builds
 
 -   \[ \] Symbol files for libraries
 
+-   \[ \] ... and more fixes for libbutl (weird versioning scheme?)
 
+-   \[x\] Multiarch builds

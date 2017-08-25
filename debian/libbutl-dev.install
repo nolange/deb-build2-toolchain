@@ -1,0 +1,3 @@
+usr/include
+usr/lib/*/libbutl.a
+usr/lib/*/pkgconfig

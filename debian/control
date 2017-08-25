@@ -10,7 +10,7 @@ Vcs-Browser: https://git.build2.org/cgit/build2
 
 Package: build2
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: libbutl (>= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: build2 C++ Build Toolchain
  build2 is an open source (MIT), cross-platform toolchain for building and packaging
  C++ code. It includes the build system (build2), package manager (bpkg), and
@@ -24,10 +24,12 @@ Description: build2 C++ Build Toolchain
  .
  This package contains the build2 build system
 
-Package: bpkg
+Package: libbutl
 Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: build2 C++ Build Package Manager
+Description: build2 C++ Utility Library
  build2 is an open source (MIT), cross-platform toolchain for building and packaging
  C++ code. It includes the build system (build2), package manager (bpkg), and
  repository web interface (brep). There is also cppget.org, a public repository of open
@@ -38,4 +40,20 @@ Description: build2 C++ Build Package Manager
  platforms/compilers. Having a sane build file syntax would be nice, too. The toolchain is
  written in C++14 and while not strictly C++-specific, that's the primary focus.
  .
- This package contains the build2 package manager
+ This package contains the build2 util library
+
+Package: libbutl-dev
+Architecture: any
+Depends: libbutl(= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: build2 C++ Utility Library dev
+ build2 is an open source (MIT), cross-platform toolchain for building and packaging
+ C++ code. It includes the build system (build2), package manager (bpkg), and
+ repository web interface (brep). There is also cppget.org, a public repository of open
+ source C++ packages.
+ .
+ The aim of the project is a next-generation build system and package manager for the
+ C++ language that provide a consistent, out of the box interface across
+ platforms/compilers. Having a sane build file syntax would be nice, too. The toolchain is
+ written in C++14 and while not strictly C++-specific, that's the primary focus.
+ .
+ This package contains the build2 util library development files

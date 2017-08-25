@@ -1,5 +1,3 @@
 usr/bin/b
-usr/include
-usr/lib
-usr/share
-
+# usr/share
+doc/build2-build-system-manual* usr/share/doc/build2
