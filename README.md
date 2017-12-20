@@ -18,7 +18,7 @@ so targets like the bootstrap can be invoked directly by eg.
 
 ## Step 1a Download build2 and libbutl archives
 
-This is mutually exclusive with Step 1b
+This is mutually exclusive with Step 1b, and not supported anymore!
 
 ```bash
 VERSION=0.6.0
@@ -39,8 +39,8 @@ In case you want a more recent version that - so far - only is available
 as full package
 
 ```bash
-VERSION=0.7.0
-FULLPACKAGE_URL=https://stage.build2.org/0/0.7.0-a.0/build2-toolchain-0.7.0-a.0.1502805684.f4dd8be576676a0e.tar.xz
+VERSION=0.6.99
+FULLPACKAGE_URL=https://stage.build2.org/0/0.7.0-a.0/build2-toolchain-0.7.0-a.0.1513492208.1b466e40662bb9a4.tar.xz
 
 FULLPACKAGE=${FULLPACKAGE_URL##*/}
 wget $FULLPACKAGE_URL
@@ -50,14 +50,16 @@ tar -C build2-toolchain_full -x -f "$(readlink -f $FULLPACKAGE)" --strip-compone
 
 tar -C build2-toolchain_full -c -J -f build2-toolchain_$VERSION.orig.tar.xz build2
 tar -C build2-toolchain_full -c -J -f build2-toolchain_$VERSION.orig-libbutl.tar.xz libbutl
+tar -C build2-toolchain_full -c -J -f build2-toolchain_$VERSION.orig-libpkgconf.tar.xz libpkgconf
 ```
 
 ## Step 2 Unpack the sources and copy the debian directory
 
 ```bash
-mkdir -p build2-toolchain build2-toolchain/libbutl
+mkdir -p build2-toolchain build2-toolchain/libbutl build2-toolchain/libpkgconf
 tar -C build2-toolchain -x -f build2-toolchain_$VERSION.orig.tar.?z --strip-components=1
 tar -C build2-toolchain/libbutl -x -f build2-toolchain_$VERSION.orig-libbutl.tar.?z --strip-components=1
+tar -C build2-toolchain/libpkgconf -x -f build2-toolchain_$VERSION.orig-libpkgconf.tar.?z --strip-components=1
 
 cp -r <path to debian directory> build2-toolchain
 ```
@@ -78,6 +80,7 @@ the .dsc file being the canonical source package information
 build2-toolchain_0.7.0-1.debian.tar.xz
 build2-toolchain_0.7.0-1.dsc
 build2-toolchain_0.7.0.orig-libbutl.tar.xz
+build2-toolchain_0.7.0.orig-libpkgconf.tar.xz
 build2-toolchain_0.7.0.orig.tar.xz
 ```
 
@@ -85,10 +88,14 @@ build2-toolchain_0.7.0.orig.tar.xz
 
 -   \[X\] Find a proper solution for the libbutl dpendency
 
--   \[ \] Properly support arguments for parallel builds
+-   \[ \] libpkgconf should be brought into debian before build2, currently its statically linked to not mess things up for the future
+
+-   \[X\] Properly support arguments for parallel builds
 
 -   \[ \] Symbol files for libraries
 
 -   \[ \] ... and more fixes for libbutl (weird versioning scheme?)
 
 -   \[x\] Multiarch builds
+
+-   \[ \] figure out how to build in a subdirectory (symlinks?). Cleanup is currently messy

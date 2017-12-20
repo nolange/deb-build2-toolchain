@@ -3,6 +3,11 @@
 # output every command that modifies files on the build system.
 #export DH_VERBOSE = 1
 
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    MAKEFLAGS += -j$(NUMJOBS)
+endif
+
 
 # see FEATURE AREAS in dpkg-buildflags(1)
 #export DEB_BUILD_MAINT_OPTIONS = hardening=+all
@@ -23,20 +28,21 @@ BOOTSTRAP_P2_EXE := $(BOOTSTRAP_PATH)/p2/build2/b
 # uses some defaults that will break building easily.
 # adding 'build2/@build2/ libbutl/@libbutl/' restricts build2
 # to those libraries.
+BUILD2_TARGETS = build2/@build2/ libbutl/@libbutl/ libpkgconf/@libpkgconf/
 
 %:
-	dh $@
+	dh $@ --parallel
 
 $(BOOTSTRAP_P1_EXE):
 	mkdir -p $(BOOTSTRAP_PATH)/p1
 	cd $(BOOTSTRAP_PATH)/p1 && \
-	  $(MAKE) -s -f $(abspath bootstrap.gmake) CXX=g++ -j8
+	  $(MAKE) -s -f $(abspath bootstrap.gmake) CXX=g++
 
 bootstrap-p1: $(BOOTSTRAP_P1_EXE)
 
 $(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
 	mkdir -p $(dir $(BOOTSTRAP_P2_EXE))
-	$(abspath $(BOOTSTRAP_P1_EXE)) build2/@build2/ libbutl/@libbutl/ config.cxx=$(CXX) config.bin.lib=static && \
+	$(abspath $(BOOTSTRAP_P1_EXE)) $(BUILD2_TARGETS) config.cxx=$(CXX) config.c=$(CC) config.bin.lib=static && \
 	  mv build2/b $(BOOTSTRAP_P2_EXE)
 	# remove any possible leftovers from the static build (paranoia mode)
 	$(MAKE) -s -f debian/rules clean_object_files
@@ -44,26 +50,30 @@ $(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
 bootstrap-p2: $(BOOTSTRAP_P2_EXE)
 
 override_dh_auto_configure: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE) 'configure(build2/@build2/ libbutl/@libbutl/)'    \
-	  config.cxx=$(CXX)               \
+	$(BOOTSTRAP_P2_EXE) 'configure($(BUILD2_TARGETS))'    \
+	  config.cxx=$(CXX)                 \
+	  config.c=$(CC)                    \
 	  config.cc.poptions="$(CPPFLAGS)"  \
 	  config.cc.loptions="$(LDFLAGS)"   \
 	  config.c.coptions="$(CFLAGS)"     \
 	  config.cxx.coptions="$(CXXFLAGS)" \
 	  config.install.root=/usr \
-	  config.install.lib=exec_root/lib/$(DEB_HOST_MULTIARCH)
+	  config.install.lib=exec_root/lib/$(DEB_HOST_MULTIARCH) && \
+	$(BOOTSTRAP_P2_EXE) 'configure(libpkgconf/@libpkgconf/)' \
+	  config.bin.lib=static
+
 
 override_dh_auto_build: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE) build2/@build2/ libbutl/@libbutl/
+	$(BOOTSTRAP_P2_EXE) $(BUILD2_TARGETS)
 
 override_dh_auto_install: $(BOOTSTRAP_P2_EXE)
-	$(BOOTSTRAP_P2_EXE) config.install.chroot=$(abspath debian/tmp) 'install(build2/@build2/ libbutl/@libbutl/)'
+	$(BOOTSTRAP_P2_EXE) config.install.chroot=$(abspath debian/tmp) 'install($(BUILD2_TARGETS))'
 
 clean_object_files:
-	rm -rf $(addprefix build2/,b b.d libb.u.a libb.u.a.d version.hxx version.hxx.d)
-	find build2 libbutl tests unit-tests \( -name '*.o' -o -name '*.o.d' -o -name '*.so.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.hxx.d' \) -delete
-	find tests libbutl/tests \( -name 'driver' -o -name 'driver.d' \) -delete
-	find build libbutl tests \( -name 'config.build' -o -name '*.shared.pc' -o -name '*.static.pc' -o -name '*.so' -o -name '*.a' \) -delete
+	rm -rf $(addprefix build2/,b b.d libb.u.a libb.u.a.d version.hxx version.hxx.d) $(addprefix libpkgconf/libpkgconf/,version.h)
+	find build2 libbutl libpkgconf tests unit-tests \( -name '*.o' -o -name '*.o.d' -o -name '*.so.d' -o -name '*.o.ii' -o -name '*.a.d' -o -name '*.h.d' -o -name '*.hxx.d' \) -delete
+	find tests libbutl/tests libpkgconf/tests \( -name 'driver' -o -name 'driver.d' \) -delete
+	find build libbutl libpkgconf tests \( -name 'config.build' -o -name '*.shared.pc' -o -name '*.static.pc' -o -name '*.so' -o -name '*.a' \) -delete
 
 override_dh_auto_clean: clean_object_files
 	rm -rf $(BOOTSTRAP_PATH)
