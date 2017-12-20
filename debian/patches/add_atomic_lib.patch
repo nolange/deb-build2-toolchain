@@ -1,0 +1,61 @@
+Description: Older CPUs need libatomic
+
+Add libatomic to ensure the code compiels on older x86 and arm architectures.
+If linked with -Wl,--as-needed, the dependecy will be removed if not needed.
+
+Author: Norbert Lange <nolange79@gmail.com>
+
+
+--- a/build2/buildfile
++++ b/build2/buildfile
+@@ -18,7 +18,7 @@
+ obj{b context}: cxx.poptions += -DBUILD2_HOST_TRIPLET=\"$cxx.target\"
+ 
+ if ($cxx.target.class != "windows")
+-  cxx.libs += -lpthread
++  cxx.libs += -lpthread -latomic
+ else
+ {
+   # Adjust stack size (affects all threads).
+--- a/build2/target.hxx
++++ b/build2/target.hxx
+@@ -1373,7 +1373,7 @@
+     //               "timestamp is not lock-free on this architecture");
+ 
+ #if !defined(ATOMIC_LLONG_LOCK_FREE) || ATOMIC_LLONG_LOCK_FREE != 2
+-#  error timestamp is not lock-free on this architecture
++#  warning timestamp is not lock-free on this architecture
+ #endif
+ 
+     // Note that the value is not used to synchronize any other state so we
+--- a/libbutl/buildfile
++++ b/libbutl/buildfile
+@@ -12,6 +12,9 @@
+ doc{version}: dist  = true
+ doc{version}: clean = ($src_root != $out_root)
+ 
++if ($cxx.target.class != "windows")
++  cxx.libs += -latomic
++
+ # Don't install tests or the INSTALL file.
+ #
+ dir{tests/}:     install = false
+--- a/bootstrap.gmake
++++ b/bootstrap.gmake
+@@ -43,7 +43,7 @@
+   chost := i686-w64-mingw32
+   override LIBS += -limagehlp
+ else
+-  override LIBS += -lpthread
++  override LIBS += -lpthread -latomic
+ endif
+ 
+ # Remove all the built-in rules, enable second expansion, etc.
+--- a/bootstrap.sh
++++ b/bootstrap.sh
+@@ -134,4 +134,4 @@
+ # mode since 4.9 doesn't recognize c++1z.
+ #
+ set -x
+-"$cxx" "-I$libbutl" -I. -DBUILD2_BOOTSTRAP '-DBUILD2_HOST_TRIPLET="'"$host"'"' -std=c++1y "$@" -o build2/b-boot $src -lpthread
++"$cxx" "-I$libbutl" -I. -DBUILD2_BOOTSTRAP '-DBUILD2_HOST_TRIPLET="'"$host"'"' -std=c++1y "$@" -o build2/b-boot $src -lpthread -latomic

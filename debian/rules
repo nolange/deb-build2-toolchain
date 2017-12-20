@@ -19,6 +19,11 @@ endif
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 # include /usr/share/dpkg/default.mk
 include $(addprefix /usr/share/dpkg/,buildflags.mk architecture.mk)
+ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+DO_CROSS := 1
+CROSS_PREFIX := $(DEB_HOST_GNU_TYPE)-
+CC=gcc
+endif
 
 BOOTSTRAP_PATH := _bstr
 BOOTSTRAP_P1_EXE := $(BOOTSTRAP_PATH)/p1/build2/b-boot
@@ -33,26 +38,36 @@ BUILD2_TARGETS = build2/@build2/ libbutl/@libbutl/ libpkgconf/@libpkgconf/
 %:
 	dh $@ --parallel
 
+# Bootstrap is always running on build system,
+# compiler flags are not important
 $(BOOTSTRAP_P1_EXE):
 	mkdir -p $(BOOTSTRAP_PATH)/p1
 	cd $(BOOTSTRAP_PATH)/p1 && \
-	  $(MAKE) -s -f $(abspath bootstrap.gmake) CXX=g++
+	  $(MAKE) -s -f $(abspath bootstrap.gmake) CXX=$(CXX)
 
 bootstrap-p1: $(BOOTSTRAP_P1_EXE)
 
+# skip compiling bootstrap builder by setting
+# DEBUG_USE_BOOTSTRAP to a existing build2 executable
+ifneq ($(DEBUG_USE_BOOTSTRAP),)
+$(BOOTSTRAP_P2_EXE): $(DEBUG_USE_BOOTSTRAP)
+	install -D $< $@
+else
 $(BOOTSTRAP_P2_EXE): $(BOOTSTRAP_P1_EXE)
 	mkdir -p $(dir $(BOOTSTRAP_P2_EXE))
 	$(abspath $(BOOTSTRAP_P1_EXE)) $(BUILD2_TARGETS) config.cxx=$(CXX) config.c=$(CC) config.bin.lib=static && \
 	  mv build2/b $(BOOTSTRAP_P2_EXE)
 	# remove any possible leftovers from the static build (paranoia mode)
 	$(MAKE) -s -f debian/rules clean_object_files
+endif
 
 bootstrap-p2: $(BOOTSTRAP_P2_EXE)
 
 override_dh_auto_configure: $(BOOTSTRAP_P2_EXE)
+	# TODO: how to set sysroot for cross compile
 	$(BOOTSTRAP_P2_EXE) 'configure($(BUILD2_TARGETS))'    \
-	  config.cxx=$(CXX)                 \
-	  config.c=$(CC)                    \
+	  config.cxx=$(CROSS_PREFIX)$(CXX)  \
+	  config.c=$(CROSS_PREFIX)$(CC)     \
 	  config.cc.poptions="$(CPPFLAGS)"  \
 	  config.cc.loptions="$(LDFLAGS)"   \
 	  config.c.coptions="$(CFLAGS)"     \

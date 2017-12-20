@@ -44,7 +44,7 @@ Description: build2 C++ Utility Library
 
 Package: libbutl-dev
 Architecture: any
-Depends: libbutl(= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: libbutl(= ${binary:Version}), ${misc:Depends}
 Description: build2 C++ Utility Library dev
  build2 is an open source (MIT), cross-platform toolchain for building and packaging
  C++ code. It includes the build system (build2), package manager (bpkg), and
