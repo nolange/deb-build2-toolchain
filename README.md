@@ -1,7 +1,17 @@
 <!-- vi:et:ts=4 -->
 # unofficial Debian package for build2 toolchain
 
+This is an effort to package the build2 buildsystem in a proper
+debian package.
+It just includes the debian specific scripts, steps to create a full source package
+are described.
+
+the full source package should then be able to be compiled into the binary packages
+to all supported architectures with debian "Jessie" or later (as build2 depends on gcc with C++14 support).
+
 # Preparation
+
+To be able to build the package you will need the debian build system helpers.
 
 ```bash
 apt-get install dpkg-dev debhelper
@@ -40,7 +50,7 @@ as full package
 
 ```bash
 VERSION=0.6.99
-FULLPACKAGE_URL=https://stage.build2.org/0/0.7.0-a.0/build2-toolchain-0.7.0-a.0.1513492208.1b466e40662bb9a4.tar.xz
+FULLPACKAGE_URL=https://stage.build2.org/0/0.7.0-a.0/build2-toolchain-0.7.0-a.0.1516205176.fb7f383bdb5b2f38.tar.xz
 
 FULLPACKAGE=${FULLPACKAGE_URL##*/}
 wget $FULLPACKAGE_URL
@@ -77,11 +87,49 @@ This will result in the following files,
 the .dsc file being the canonical source package information
 
 ```
-build2-toolchain_0.7.0-1.debian.tar.xz
-build2-toolchain_0.7.0-1.dsc
-build2-toolchain_0.7.0.orig-libbutl.tar.xz
-build2-toolchain_0.7.0.orig-libpkgconf.tar.xz
-build2-toolchain_0.7.0.orig.tar.xz
+build2-toolchain_0.6.99-1.debian.tar.xz
+build2-toolchain_0.6.99-1.dsc
+build2-toolchain_0.6.99.orig-libbutl.tar.xz
+build2-toolchain_0.6.99.orig-libpkgconf.tar.xz
+build2-toolchain_0.6.99.orig.tar.xz
+```
+
+## Step 4 Create the binary packages
+
+This is not the primary focus, better tutorials are elsewhere.
+
+Local Build would be:
+
+```bash
+dpkg-source -x build2-toolchain_0.6.99-1.dsc
+cd build2-toolchain-0.6.99
+dpkg-buildpackage
+```
+
+If you have to rebuild multiple times, maybe you can an want to skip the bootstrap build.
+This can be done by setting an environment variable containing the path to an existing build2 binary
+(should be the same version as the target, ideally taken from a previous run).
+
+```
+DEBUG_USE_BOOTSTRAP=/tmp/b dpkg-buildpackage
+```
+
+Crosscompiling still fails after compiling when trying to resolve library dependencies for packaging (`dh_shlibdeps`),
+a workaround is available with `DO_CROSS_WORKAROUND`, this is primary for testing, regular packages are *not* built this way.
+exemplary [Cross Build](https://wiki.debian.org/CrossCompiling#Building_with_dpkg-buildpackage) would be (build *for armel*):
+
+```bash
+dpkg-source -x build2-toolchain_0.6.99-1.dsc
+cd build2-toolchain-0.6.99
+DO_CROSS_WORKAROUND=1 dpkg-buildpackage -aarmel
+```
+
+## Step 5 Install the binary packages
+
+Install build2, together with the dependendy libutl:
+
+```bash
+dpkg -i build2_0.6.99-1_amd64.deb libbutl_0.6.99-1_amd64.deb
 ```
 
 # TODOs
@@ -92,7 +140,7 @@ build2-toolchain_0.7.0.orig.tar.xz
 
 -   \[X\] Properly support arguments for parallel builds
 
--   \[ \] Symbol files for libraries
+-   \[ \] Symbol files for libraries ?
 
 -   \[ \] ... and more fixes for libbutl (weird versioning scheme?)
 
