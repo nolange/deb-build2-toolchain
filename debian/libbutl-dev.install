@@ -1,3 +1,4 @@
 usr/include
 usr/lib/*/libbutl.a
+usr/lib/*/libbutl.so
 usr/lib/*/pkgconfig

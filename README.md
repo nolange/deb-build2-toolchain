@@ -49,8 +49,8 @@ In case you want a more recent version that - so far - only is available
 as full package
 
 ```bash
-VERSION=0.6.99
-FULLPACKAGE_URL=https://stage.build2.org/0/0.7.0-a.0/build2-toolchain-0.7.0-a.0.1516205176.fb7f383bdb5b2f38.tar.xz
+VERSION=0.7.0
+FULLPACKAGE_URL=https://download.build2.org/0.7.0/build2-toolchain-0.7.0.tar.xz
 
 FULLPACKAGE=${FULLPACKAGE_URL##*/}
 wget $FULLPACKAGE_URL
