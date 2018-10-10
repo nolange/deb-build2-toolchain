@@ -49,8 +49,8 @@ In case you want a more recent version that - so far - only is available
 as full package
 
 ```bash
-VERSION=0.7.0
-FULLPACKAGE_URL=https://download.build2.org/0.7.0/build2-toolchain-0.7.0.tar.xz
+VERSION=0.8.0
+FULLPACKAGE_URL=https://download.build2.org/$VERSION/build2-toolchain-$VERSION.tar.xz
 
 FULLPACKAGE=${FULLPACKAGE_URL##*/}
 wget $FULLPACKAGE_URL
@@ -87,11 +87,11 @@ This will result in the following files,
 the .dsc file being the canonical source package information
 
 ```
-build2-toolchain_0.6.99-1.debian.tar.xz
-build2-toolchain_0.6.99-1.dsc
-build2-toolchain_0.6.99.orig-libbutl.tar.xz
-build2-toolchain_0.6.99.orig-libpkgconf.tar.xz
-build2-toolchain_0.6.99.orig.tar.xz
+build2-toolchain_0.8.0-1.debian.tar.xz
+build2-toolchain_0.8.0-1.dsc
+build2-toolchain_0.8.0.orig-libbutl.tar.xz
+build2-toolchain_0.8.0.orig-libpkgconf.tar.xz
+build2-toolchain_0.8.0.orig.tar.xz
 ```
 
 ## Step 4 Create the binary packages
@@ -101,8 +101,8 @@ This is not the primary focus, better tutorials are elsewhere.
 Local Build would be:
 
 ```bash
-dpkg-source -x build2-toolchain_0.6.99-1.dsc
-cd build2-toolchain-0.6.99
+dpkg-source -x build2-toolchain_0.8.0-1.dsc
+cd build2-toolchain-0.8.0
 dpkg-buildpackage
 ```
 
@@ -119,8 +119,8 @@ a workaround is available with `DO_CROSS_WORKAROUND`, this is primary for testin
 exemplary [Cross Build](https://wiki.debian.org/CrossCompiling#Building_with_dpkg-buildpackage) would be (build *for armel*):
 
 ```bash
-dpkg-source -x build2-toolchain_0.6.99-1.dsc
-cd build2-toolchain-0.6.99
+dpkg-source -x build2-toolchain_0.8.0-1.dsc
+cd build2-toolchain-0.8.0
 DO_CROSS_WORKAROUND=1 dpkg-buildpackage -aarmel
 ```
 
@@ -129,7 +129,7 @@ DO_CROSS_WORKAROUND=1 dpkg-buildpackage -aarmel
 Install build2, together with the dependendy libutl:
 
 ```bash
-dpkg -i build2_0.6.99-1_amd64.deb libbutl_0.6.99-1_amd64.deb
+dpkg -i build2_0.8.0-1_amd64.deb libbutl_0.8.0-1_amd64.deb
 ```
 
 # TODOs

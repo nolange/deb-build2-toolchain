@@ -1,4 +1,4 @@
-build2-toolchain (0.7.0-1) unstable; urgency=medium
+build2-toolchain (0.8.0-1) unstable; urgency=medium
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 

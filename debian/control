@@ -10,7 +10,7 @@ Vcs-Browser: https://git.build2.org/cgit/build2
 
 Package: build2
 Architecture: any
-Depends: libbutl-0.7 (>= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: libbutl-0.8 (>= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: build2 C++ Build Toolchain
  build2 is an open source (MIT), cross-platform toolchain for building and
  packaging C++ code. It includes the build system (build2),
@@ -25,7 +25,7 @@ Description: build2 C++ Build Toolchain
  .
  This package contains the build2 build system.
 
-Package: libbutl-0.7
+Package: libbutl-0.8
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -46,7 +46,7 @@ Description: build2 C++ Utility Library
 
 Package: libbutl-dev
 Architecture: any
-Depends: libbutl-0.7 (= ${binary:Version}), ${misc:Depends}
+Depends: libbutl-0.8 (= ${binary:Version}), ${misc:Depends}
 Description: build2 C++ Utility Library dev
  build2 is an open source (MIT), cross-platform toolchain for building and
  packaging C++ code. It includes the build system (build2),
